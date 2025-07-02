@@ -1,0 +1,116 @@
+DATABASE BEAN BANK
+
+======================
+
+DB_NAME=bbank_db
+
+=== buat table city ===
+CREATE TABLE `city` (
+  `city_code` char(5) NOT NULL,
+  `city_name` varchar(100) NOT NULL,
+  `parent_code` char(5) DEFAULT NULL,
+  `province_code` char(5) NOT NULL,
+  PRIMARY KEY (`city_code`),
+  KEY `province_code` (`province_code`),
+  CONSTRAINT `city_ibfk_1` FOREIGN KEY (`province_code`) REFERENCES `province` (`province_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+=== buat table customer ===
+CREATE TABLE `customer` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `office_code` char(4) NOT NULL,
+  `cif_number` char(9) NOT NULL,
+  `ktp` char(16) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `address` text NOT NULL,
+  `city_code` char(5) NOT NULL,
+  `province_code` char(5) NOT NULL,
+  `phone_number` varchar(15) NOT NULL,
+  `mother_name` varchar(100) NOT NULL,
+  `marital_status_id` int NOT NULL,
+  `gender_id` int NOT NULL,
+  `date_of_birth` date NOT NULL,
+  `place_of_birth` varchar(100) NOT NULL,
+  `occupation` varchar(100) NOT NULL,
+  `income_range_id` int NOT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `residential_status_id` int NOT NULL,
+  `photo_path` varchar(255) DEFAULT NULL,
+  `officer_code` varchar(10) NOT NULL,
+  `state` enum('PENDING','ACTIVE','CLOSED') DEFAULT 'PENDING',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `cif_number` (`cif_number`),
+  KEY `office_code` (`office_code`),
+  KEY `city_code` (`city_code`),
+  KEY `province_code` (`province_code`),
+  KEY `officer_code` (`officer_code`),
+  CONSTRAINT `customer_ibfk_1` FOREIGN KEY (`office_code`) REFERENCES `office` (`office_code`),
+  CONSTRAINT `customer_ibfk_2` FOREIGN KEY (`city_code`) REFERENCES `city` (`city_code`),
+  CONSTRAINT `customer_ibfk_3` FOREIGN KEY (`province_code`) REFERENCES `province` (`province_code`),
+  CONSTRAINT `customer_ibfk_4` FOREIGN KEY (`officer_code`) REFERENCES `officer` (`officer_code`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+
+=== buat table customer state history ===
+CREATE TABLE `customer_state_history` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `customer_id` int NOT NULL,
+  `state` enum('PENDING','ACTIVE','CLOSED') NOT NULL,
+  `changed_date` datetime DEFAULT CURRENT_TIMESTAMP,
+  `officer_code` varchar(10) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `customer_id` (`customer_id`),
+  KEY `officer_code` (`officer_code`),
+  CONSTRAINT `customer_state_history_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`id`),
+  CONSTRAINT `customer_state_history_ibfk_2` FOREIGN KEY (`officer_code`) REFERENCES `officer` (`officer_code`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+=== buat table master data ===
+CREATE TABLE `master_data` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `entity_type_id` int NOT NULL,
+  `entity_type_name` varchar(50) NOT NULL,
+  `label` varchar(50) NOT NULL,
+  `description` varchar(100) NOT NULL,
+  `status` tinyint(1) DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+=== buat table office ===
+CREATE TABLE `office` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `office_code` char(4) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `office_level` enum('HEAD','BRANCH') NOT NULL,
+  `address` text NOT NULL,
+  `city_code` char(5) NOT NULL,
+  `province_code` char(5) NOT NULL,
+  `phone_number` varchar(15) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `office_code` (`office_code`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+=== buat table officer ===
+CREATE TABLE `officer` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `officer_code` varchar(10) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `gender_id` int NOT NULL,
+  `date_of_birth` date NOT NULL,
+  `office_code` char(4) NOT NULL,
+  `active_status` tinyint(1) DEFAULT '1',
+  `join_date` date NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `officer_code` (`officer_code`),
+  KEY `office_code` (`office_code`),
+  CONSTRAINT `officer_ibfk_1` FOREIGN KEY (`office_code`) REFERENCES `office` (`office_code`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+=== buat table province ===
+CREATE TABLE `province` (
+  `province_code` char(5) NOT NULL,
+  `province_name` varchar(100) NOT NULL,
+  PRIMARY KEY (`province_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
