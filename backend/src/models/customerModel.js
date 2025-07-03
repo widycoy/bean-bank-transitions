@@ -1,17 +1,16 @@
 import db from '../config/db.js';
 
 export const isKtpExistWithActiveState = async (ktp) => {
-  const [rows] = await db.query(
-    'SELECT COUNT(*) AS total FROM customer WHERE ktp = ? AND state = "ACTIVE"',
-    [ktp]
-  );
+  const sql1 = `SELECT COUNT(*) AS total FROM customer WHERE ktp = ? AND state = "ACTIVE"`;
+  const [rows] = await db.query(sql1,[ktp]);
   return rows[0].total > 0;
+  
 };
 
+
 export const isOfficerInOffice = async (officerCode, officeCode) => {
-  const [rows] = await db.query(
-    'SELECT COUNT(*) AS total FROM officer WHERE officer_code = ? AND office_code = ?',
-    [officerCode, officeCode]
+  const sql2 = 'SELECT COUNT(*) AS total FROM officer WHERE officer_code = ? AND office_code = ?';
+  const [rows] = await db.query(sql2,[officerCode, officeCode]
   );
   return rows[0].total > 0;
 };
