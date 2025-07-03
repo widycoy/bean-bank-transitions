@@ -77,7 +77,11 @@ export const submitCustomer = async (req, res) => {
       office_code
     });
 
-    res.status(201).json({ message: 'Customer created successfully', cif_number });
+    res.status(201).json({
+       message: 'Customer created successfully',
+      cif_number,
+      data: req.body
+     });
 
   } catch (err) {
     res.status(500).json({ message: 'Insert failed', error: err.message });
