@@ -1,4 +1,5 @@
 import {
+  getAllCustomers,
   isKtpExistWithActiveState,
   isOfficerInOffice,
   generateCifNumber,
@@ -24,6 +25,21 @@ const validateRequiredFields = (body) => {
 };
 
 //  Main Controller
+export const getCustomers = async (req, res) => {
+  try {
+    const customers = await getAllCustomers();
+    // === Response Success ===
+    return res.status(200).json({
+      message: 'Customer get successfully',
+      data: customers
+    });
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
 export const submitCustomer = async (req, res) => {
   try {
     const customerData = req.body;
