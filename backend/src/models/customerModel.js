@@ -186,3 +186,85 @@ ORDER BY c.id ASC;`
   const [rows] = await db.query(query, [id]);
   return rows[0] || null;
 };
+
+// fungsi fitur searching
+// fungsi fitur searching
+export const searchCustomers = async (filters) => {
+  const {
+    cif_number,
+    ktp,
+    name,
+    office_code,
+    office_name, // ✅ tambahkan filter baru
+    state,
+    page = 1,
+    limit = 10,
+    sortBy = 'c.id',
+    sortOrder = 'ASC'
+  } = filters;
+
+  let whereClause = 'WHERE 1=1';
+  const values = [];
+
+  // === Filter Builder ===
+  if (cif_number) {
+    whereClause += ' AND c.cif_number LIKE ?';
+    values.push(`%${cif_number}%`);
+  }
+
+  if (ktp) {
+    whereClause += ' AND c.ktp LIKE ?';
+    values.push(`%${ktp}%`);
+  }
+
+  if (name) {
+    whereClause += ' AND c.name LIKE ?';
+    values.push(`%${name}%`);
+  }
+
+  if (office_code) {
+    whereClause += ' AND c.office_code = ?';
+    values.push(office_code);
+  }
+
+  if (office_name) { // ✅ filtering berdasarkan nama office
+    whereClause += ' AND f.name LIKE ?';
+    values.push(`%${office_name}%`);
+  }
+
+  if (state) {
+    whereClause += ' AND c.state = ?';
+    values.push(state);
+  }
+
+  // === Query Total Count ===
+  const countQuery = `
+    SELECT COUNT(*) AS totalCount
+    FROM customer c
+    LEFT JOIN officer o ON c.officer_code = o.officer_code
+    LEFT JOIN office f ON c.office_code = f.office_code
+    ${whereClause}
+  `;
+  const [countResult] = await db.query(countQuery, values);
+  const totalCount = countResult[0].totalCount;
+
+  // === Query Data with Pagination ===
+  const dataQuery = `
+    SELECT c.id, c.cif_number, c.name, c.ktp, c.state,
+           o.name AS officer_name, f.name AS office_name
+    FROM customer c
+    LEFT JOIN officer o ON c.officer_code = o.officer_code
+    LEFT JOIN office f ON c.office_code = f.office_code
+    ${whereClause}
+    ORDER BY ${sortBy} ${sortOrder}
+    LIMIT ? OFFSET ?
+  `;
+  const offset = (page - 1) * limit;
+  const [rows] = await db.query(dataQuery, [...values, limit, offset]);
+
+  return {
+    data: rows,
+    totalCount
+  };
+};
+

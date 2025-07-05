@@ -1,6 +1,6 @@
 import {
+  searchCustomers,
   getCustomerById,
-  getAllCustomers,
   isKtpExistWithActiveState,
   isOfficerInOffice,
   generateCifNumber,
@@ -26,18 +26,34 @@ const validateRequiredFields = (body) => {
 };
 
 //  Main Controller
+// fungsi fitur search 
 export const getCustomers = async (req, res) => {
   try {
-    const customers = await getAllCustomers();
-    // === Response Success ===
-    return res.status(200).json({
+    const filters = {
+      ...req.query,
+      page: parseInt(req.query.page) || 1,
+      limit: parseInt(req.query.limit) || 10,
+      sortBy: req.query.sortBy || 'c.id',
+      sortOrder: req.query.sortOrder?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'
+    };
+
+    const { data, totalCount } = await searchCustomers(filters);
+
+    res.json({
       message: 'Customer get successfully',
-      data: customers
+      page: filters.page,
+      limit: filters.limit,
+      totalCount,
+      totalPages: Math.ceil(totalCount / filters.limit),
+      data
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Gagal mengambil data', error: err.message });
   }
 };
+
+
+
 
 export const getCustomer = async (req, res) => {
   try {
