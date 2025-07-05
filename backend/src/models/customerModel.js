@@ -187,15 +187,13 @@ ORDER BY c.id ASC;`
   return rows[0] || null;
 };
 
-// fungsi fitur searching
-// fungsi fitur searching
+// Fungsi Search & Pagination
 export const searchCustomers = async (filters) => {
   const {
     cif_number,
     ktp,
     name,
-    office_code,
-    office_name, // ✅ tambahkan filter baru
+    office_name,
     state,
     page = 1,
     limit = 10,
@@ -203,68 +201,64 @@ export const searchCustomers = async (filters) => {
     sortOrder = 'ASC'
   } = filters;
 
-  let whereClause = 'WHERE 1=1';
-  const values = [];
+  let baseWhere = 'WHERE 1=1';
+  const params = [];
 
-  // === Filter Builder ===
+  // Filter builder
   if (cif_number) {
-    whereClause += ' AND c.cif_number LIKE ?';
-    values.push(`%${cif_number}%`);
+    baseWhere += ' AND c.cif_number LIKE ?';
+    params.push(`%${cif_number}%`);
   }
 
   if (ktp) {
-    whereClause += ' AND c.ktp LIKE ?';
-    values.push(`%${ktp}%`);
+    baseWhere += ' AND c.ktp LIKE ?';
+    params.push(`%${ktp}%`);
   }
 
   if (name) {
-    whereClause += ' AND c.name LIKE ?';
-    values.push(`%${name}%`);
+    baseWhere += ' AND c.name LIKE ?';
+    params.push(`%${name}%`);
   }
 
-  if (office_code) {
-    whereClause += ' AND c.office_code = ?';
-    values.push(office_code);
-  }
-
-  if (office_name) { // ✅ filtering berdasarkan nama office
-    whereClause += ' AND f.name LIKE ?';
-    values.push(`%${office_name}%`);
+  if (office_name) {
+    baseWhere += ' AND f.name LIKE ?';
+    params.push(`%${office_name}%`);
   }
 
   if (state) {
-    whereClause += ' AND c.state = ?';
-    values.push(state);
+    baseWhere += ' AND c.state = ?';
+    params.push(state);
   }
 
-  // === Query Total Count ===
+  // Query total data
   const countQuery = `
     SELECT COUNT(*) AS totalCount
     FROM customer c
     LEFT JOIN officer o ON c.officer_code = o.officer_code
     LEFT JOIN office f ON c.office_code = f.office_code
-    ${whereClause}
+    ${baseWhere}
   `;
-  const [countResult] = await db.query(countQuery, values);
+  const [countResult] = await db.query(countQuery, params);
   const totalCount = countResult[0].totalCount;
 
-  // === Query Data with Pagination ===
+  // Query data dengan pagination
   const dataQuery = `
-    SELECT c.id, c.cif_number, c.name, c.ktp, c.state,
-           o.name AS officer_name, f.name AS office_name
+    SELECT 
+      c.id, c.cif_number, c.name, c.ktp, c.state,
+      o.name AS officer_name,
+      f.name AS office_name
     FROM customer c
     LEFT JOIN officer o ON c.officer_code = o.officer_code
     LEFT JOIN office f ON c.office_code = f.office_code
-    ${whereClause}
+    ${baseWhere}
     ORDER BY ${sortBy} ${sortOrder}
     LIMIT ? OFFSET ?
   `;
   const offset = (page - 1) * limit;
-  const [rows] = await db.query(dataQuery, [...values, limit, offset]);
+  const [rows] = await db.query(dataQuery, [...params, limit, offset]);
 
   return {
     data: rows,
     totalCount
   };
 };
-
