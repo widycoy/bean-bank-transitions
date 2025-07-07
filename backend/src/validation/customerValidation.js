@@ -10,15 +10,5 @@ export const validateRequiredFields = (body) => {
   return missing.length === 0;
 };
 
-// Cek apakah KTP sudah digunakan oleh customer dengan status ACTIVE
-export const isKtpExistWithActiveState = async (ktp) => {
-  const query = `
-    SELECT COUNT(*) AS total
-    FROM customer
-    WHERE ktp = ? AND state = 'ACTIVE'
-  `;
-  const [rows] = await db.query(query, [ktp]);
-  return rows[0].total > 0;
-};
 
 

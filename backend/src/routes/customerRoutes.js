@@ -5,10 +5,12 @@ import {
   createCustomerController        // untuk insert data customer baru
 } from '../controllers/customerController.js';
 
+import { uploadPhoto } from '../middlewares/uploadPhoto.js';
+
 const router = express.Router();
 
 // Create a new customer
-router.post('/', createCustomerController);
+router.post('/', uploadPhoto, createCustomerController);
 
 // Get list of customers with filter/sort/pagination
 router.get('/', getCustomersController);

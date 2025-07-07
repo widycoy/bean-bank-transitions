@@ -55,7 +55,8 @@ export const insertCustomer = async (data) => {
     email,
     residential_status_id,
     officer_code,
-    office_code
+    office_code,
+    photo_path
   } = data;
 
   const query = `
@@ -63,15 +64,16 @@ export const insertCustomer = async (data) => {
       cif_number, ktp, name, address, city_code, province_code,
       phone_number, mother_name, marital_status_id, gender_id,
       date_of_birth, place_of_birth, occupation, income_range_id,
-      email, residential_status_id, officer_code, office_code, state
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      email, residential_status_id, officer_code, office_code, state, photo_path
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   const values = [
     cif_number, ktp, name, address, city_code, province_code,
     phone_number, mother_name, marital_status_id, gender_id,
     date_of_birth, place_of_birth, occupation, income_range_id,
-    email, residential_status_id, officer_code, office_code, 'PENDING'
+    email, residential_status_id, officer_code, office_code, 'PENDING',
+    photo_path
   ];
 
   await db.query(query, values);

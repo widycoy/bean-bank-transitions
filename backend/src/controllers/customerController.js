@@ -67,6 +67,8 @@ export const createCustomerController = async (req, res) => {
       ktp, email, date_of_birth, officer_code, office_code
     } = data;
 
+    
+
     // Validasi
     // Validation of KTP Format 
     if (!isValidKtp(ktp)) {
@@ -102,12 +104,19 @@ export const createCustomerController = async (req, res) => {
 
     // Generate CIF dan Insert
     const cif_number = await generateCifNumber(office_code);
-    await insertCustomer({ ...data, cif_number });
+    
+    // === Cek apakah ada file foto ===
+    let photo_path = null;
+    if (req.file) {
+      photo_path = `/uploads/${req.file.filename}`;
+    }
+
+    await insertCustomer({ ...data, cif_number, photo_path });
 
     res.status(201).json({
       message: 'Customer created successfully',
       cif_number,
-      data
+      data : { ...data, photo_path }
     });
 
   } catch (err) {
