@@ -12,6 +12,9 @@ const PORT = process.env.PORT || 5002;
 app.use(cors());
 app.use(express.json());
 
+// Serves image, PDF, etc. files from the public/uploads folder
+app.use('/uploads', express.static('public/uploads'));
+
 // Routes
 app.use('/api/customers', customerRoutes);
 

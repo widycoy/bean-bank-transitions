@@ -139,6 +139,7 @@ export const getCustomerById = async (id) => {
   const query = `SELECT
   c.id,
   c.cif_number,
+  c.photo_path,
   c.name,
   c.ktp,
   c.date_of_birth,
@@ -246,7 +247,7 @@ export const searchCustomers = async (filters) => {
   // Query data dengan pagination
   const dataQuery = `
     SELECT 
-      c.id, c.cif_number, c.name, c.ktp, c.state,
+      c.id, c.cif_number,c.photo_path, c.name, c.ktp, c.state,
       o.name AS officer_name,
       f.name AS office_name
     FROM customer c
