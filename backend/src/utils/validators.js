@@ -14,3 +14,14 @@ export const validateAge = (date_of_birth) => {
 export const isValidKtp = (ktp) => {
   return ktp && /^\d{16}$/.test(ktp);
 };
+
+// validasi status transititon
+export const isValidStatusTransition = (currentStatus, newStatus) => {
+  const allowedTransitions = {
+    PENDING: ['ACTIVE', 'CLOSED'],
+    ACTIVE: ['CLOSED'],
+    CLOSED: []
+  };
+
+  return allowedTransitions[currentStatus]?.includes(newStatus);
+};

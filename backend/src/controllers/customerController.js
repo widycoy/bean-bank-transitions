@@ -1,4 +1,8 @@
+import fs from 'fs';
+import path from 'path';
+
 import {
+  updateCustomerById,
   searchCustomers,
   getCustomerById,
   isKtpExistWithActiveState,
@@ -7,8 +11,14 @@ import {
   insertCustomer
 } from '../models/customerModel.js';
 
-import { validateAge, isValidEmail, isValidKtp } from '../utils/validators.js';
+import { isValidStatusTransition, validateAge, isValidEmail, isValidKtp } from '../utils/validators.js';
 import { validateRequiredFields } from '../validation/customerValidation.js';
+
+// Fungsi bantu hapus file
+const deleteUploadedFile = (filename) => {
+  const filePath = path.join('public/uploads', filename);
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+};
 
 
 // Get all customers (with search, sort, pagination)
@@ -121,5 +131,108 @@ export const createCustomerController = async (req, res) => {
 
   } catch (err) {
     res.status(500).json({ message: 'Insert failed', error: err.message });
+  }
+};
+
+
+export const updateCustomerController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+    const {
+      ktp, email, date_of_birth, state,
+      officer_code, office_code
+    } = data;
+
+
+    // ✅ Ambil data customer yang belum soft delete
+    const existingCustomer = await getCustomerById(id);
+    if (!existingCustomer) {
+      if (req.file) deleteUploadedFile(req.file.filename);
+      return res.status(404).json({ message: 'Customer tidak ditemukan atau sudah dihapus' });
+    }
+
+    // ✅ Validasi field wajib
+    if (!validateRequiredFields(data)) {
+      if (req.file) deleteUploadedFile(req.file.filename);
+      return res.status(400).json({ message: 'Semua field wajib harus diisi' });
+    }
+
+    // ✅ Validasi KTP
+    if (!isValidKtp(ktp)) {
+      if (req.file) deleteUploadedFile(req.file.filename);
+      return res.status(400).json({ message: 'KTP harus 16 digit angka' });
+    }
+
+    // ✅ Validasi umur
+    if (!validateAge(date_of_birth)) {
+      if (req.file) deleteUploadedFile(req.file.filename);
+      return res.status(400).json({ message: 'Umur harus antara 17-55 tahun' });
+    }
+
+    // ✅ Validasi email (jika ada)
+    if (email && !isValidEmail(email)) {
+      if (req.file) deleteUploadedFile(req.file.filename);
+      return res.status(400).json({ message: 'Format email tidak valid' });
+    }
+
+    // ✅ Validasi officer dan office
+    const officerValid = await isOfficerInOffice(officer_code, office_code);
+    if (!officerValid) {
+      if (req.file) deleteUploadedFile(req.file.filename);
+      return res.status(400).json({ message: 'Officer harus berasal dari office yang sama' });
+    }
+
+    // ✅ Validasi transisi status
+    const currentStatus = existingCustomer.state;
+    const newStatus = state;
+    const customerId = parseInt(id, 10);
+
+    if (newStatus && currentStatus !== newStatus) {
+      const isAllowed = isValidStatusTransition(currentStatus, newStatus);
+      if (!isAllowed) {
+        if (req.file) deleteUploadedFile(req.file.filename);
+        return res.status(400).json({
+          message: `Transisi status dari ${currentStatus} ke ${newStatus} tidak diperbolehkan`
+        });
+      }
+
+      // ✅ Jika pindah ke ACTIVE, pastikan KTP tidak dipakai customer ACTIVE lain
+      if (newStatus === 'ACTIVE') {
+        const isDuplicateKtp = await isKtpExistWithActiveState(ktp, customerId);
+        if (isDuplicateKtp) {
+          if (req.file) deleteUploadedFile(req.file.filename);
+          return res.status(409).json({ message: 'KTP sudah digunakan oleh customer ACTIVE lain' });
+        }
+      }
+    }
+
+
+    // ✅ Tambahkan photo_path jika upload file
+    if (req.file) {
+      data.photo_path = `/uploads/${req.file.filename}`;
+    }
+
+    // ✅ Tambahkan updated_by dari login user (kalau ada)
+    data.updated_by = req.user?.id || null;
+
+    // ✅ Jalankan update (hanya jika deleted_at IS NULL, sudah ditangani di model)
+    const affected = await updateCustomerById(id, data);
+
+    if (affected === 0) {
+      if (req.file) deleteUploadedFile(req.file.filename);
+      return res.status(400).json({
+        message: 'Update gagal. Customer mungkin sudah dihapus atau tidak ditemukan.'
+      });
+    }
+
+    return res.status(200).json({
+      message: 'Customer updated successfully',
+      data
+    });
+
+  } catch (err) {
+    if (req.file) deleteUploadedFile(req.file.filename);
+    return res.status(500).json({ message: 'Update failed', error: err.message });
   }
 };

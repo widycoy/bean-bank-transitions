@@ -1,15 +1,36 @@
 import db from '../config/db.js';
 
 // Cek apakah KTP sudah digunakan oleh customer dengan status ACTIVE
-export const isKtpExistWithActiveState = async (ktp) => {
-  const query = `
-    SELECT COUNT(*) AS total
+// export const isKtpExistWithActiveState = async (ktp) => {
+//   const query = `
+//     SELECT COUNT(*) AS total
+//     FROM customer
+//     WHERE ktp = ? AND state = 'ACTIVE'
+//   `;
+//   const [rows] = await db.query(query, [ktp]);
+//   return rows[0].total > 0;
+// };
+
+export const isKtpExistWithActiveState = async (ktp, excludeCustomerId = null) => {
+  let query = `
+    SELECT id
     FROM customer
-    WHERE ktp = ? AND state = 'ACTIVE'
+    WHERE ktp = ? AND state = 'ACTIVE' AND deleted_at IS NULL
   `;
-  const [rows] = await db.query(query, [ktp]);
-  return rows[0].total > 0;
+  const params = [ktp];
+
+  if (excludeCustomerId) {
+    query += ' AND id != ?';
+    params.push(excludeCustomerId);
+  }
+
+  const [rows] = await db.query(query, params);
+  // return rows.length > 0; // ✅ Return boolean 
+  return rows; // Array of customers with same KTP
 };
+
+
+
 
 // Cek apakah officer berasal dari office yang sama
 export const isOfficerInOffice = async (officerCode, officeCode) => {
@@ -183,6 +204,7 @@ LEFT JOIN province As p
   ON c.province_code = p.province_code
 
 WHERE c.id = ?
+  AND c.deleted_at IS NULL
 
 ORDER BY c.id ASC;`
 
@@ -204,7 +226,7 @@ export const searchCustomers = async (filters) => {
     sortOrder = 'ASC'
   } = filters;
 
-  let baseWhere = 'WHERE 1=1';
+  let baseWhere = 'WHERE c.deleted_at IS NULL';
   const params = [];
 
   // Filter builder
@@ -264,4 +286,25 @@ export const searchCustomers = async (filters) => {
     data: rows,
     totalCount
   };
+};
+
+
+export const updateCustomerById = async (id, data) => {
+  const fields = [];
+  const values = [];
+
+ // Hindari update kolom typo
+  delete data.update_at;
+  delete data.updated_at;
+
+  for (const [key, value] of Object.entries(data)) {
+    fields.push(`${key} = ?`);
+    values.push(value);
+  }
+
+  const sql = `UPDATE customer SET ${fields.join(', ')} WHERE id = ? AND deleted_at IS NULL`;
+  
+  const [result] = await db.query(sql, [...values, id]);
+
+  return result.affectedRows; // ✅ kembalikan jumlah baris yang diupdate
 };
