@@ -1,18 +1,21 @@
 import express from 'express';
 import {
-  updateCustomerController,    // untuk update customer di controller
-  getCustomersController,      // untuk list customer dengan fitur filter, pagination, sorting
-  getCustomerByIdController,      // untuk detail berdasarkan ID
-  createCustomerController        // untuk insert data customer baru
+  deleteCustomerController,     // for delete customer in the controller
+  updateCustomerController,    // for update customer in the controller
+  getCustomersController,      // for customer list with filter, pagination , sorting feature
+  getCustomerByIdController,      // for detail base on ID
+  createCustomerController        // for insert data new customer
 } from '../controllers/customerController.js';
 
 import { uploadPhoto } from '../middlewares/uploadPhoto.js';
 
 const router = express.Router();
 
+// Soft delete customer by ID
+router.delete('/:id', deleteCustomerController);
 
 // PATCH untuk update seluruh data + upload photo
-router.patch('/:id', uploadPhoto, updateCustomerController);
+router.put('/:id', uploadPhoto, updateCustomerController);
 
 // Create a new customer
 router.post('/', uploadPhoto, createCustomerController);

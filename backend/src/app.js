@@ -16,7 +16,7 @@ app.use(express.json());
 app.use('/uploads', express.static('public/uploads'));
 
 // Routes
-app.use('/api/customers', customerRoutes);
+app.use('/api/customer', customerRoutes);
 
 // Default Route
 app.get('/', (req, res) => {
