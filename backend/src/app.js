@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import customerRoutes from './routes/customerRoutes.js';
+import masterRoutes from './routes/masterRoutes.js';
+
 
 dotenv.config();
 
@@ -17,6 +19,8 @@ app.use('/uploads', express.static('public/uploads'));
 
 // Routes
 app.use('/api/customer', customerRoutes);
+app.use('/api/master', masterRoutes);
+
 
 // Default Route
 app.get('/', (req, res) => {
